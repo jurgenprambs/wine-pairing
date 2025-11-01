@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wine Pairing Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 35px;
+        }
+
+        .section-title {
+            font-size: 1.4em;
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 0.95em;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .wine-fields {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+
+        @media (min-width: 600px) {
+            .wine-fields {
+                grid-template-columns: 2fr 2fr 1fr;
+            }
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-top: 10px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .results {
+            display: none;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .wine-profile, .recipe-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .wine-profile h2, .recipe-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .wine-profile h3 {
+            color: #764ba2;
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .attribute-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .attribute {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .attribute-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .attribute-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        .recipe-content {
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .dish-name {
+            font-size: 2em;
+            color: #764ba2;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            min-width: 200px;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .error-message {
+            background: #fee;
+            border: 2px solid #e74c3c;
+            color: #c0392b;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍷 Wine Pairing Generator</h1>
+            <p>Discover the perfect meal for your wine</p>
+        </div>
+
+        <div class="form-container" id="formContainer">
+            <form id="pairingForm">
+                <div class="section">
+                    <h2 class="section-title">Your Wine</h2>
+                    <div class="wine-fields">
+                        <div class="form-group">
+                            <label for="wine_name">Wine Name <span class="required">*</span></label>
+                            <input type="text" id="wine_name" name="wine_name" required placeholder="e.g., Reserve Cabernet">
+                        </div>
+                        <div class="form-group">
+                            <label for="winery">Winery <span class="required">*</span></label>
+                            <input type="text" id="winery" name="winery" required placeholder="e.g., Château Example">
+                        </div>
+                        <div class="form-group">
+                            <label for="vintage">Vintage <span class="required">*</span></label>
+                            <input type="text" id="vintage" name="vintage" required placeholder="e.g., 2019">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h2 class="section-title">Your Preferences</h2>
+                    
+                    <div class="form-group">
+                        <label for="main_ingredient">Main Ingredient <span class="required">*</span></label>
+                        <select id="main_ingredient" name="main_ingredient" required>
+                            <option value="">-- Select --</option>
+                            <option value="Red Meat">Red Meat</option>
+                            <option value="White Meat">White Meat</option>
+                            <option value="Vegetarian">Vegetarian</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cuisine_style">Cuisine Style <span class="required">*</span></label>
+                        <select id="cuisine_style" name="cuisine_style" required>
+                            <option value="">-- Select --</option>
+                            <option value="Italian">Italian</option>
+                            <option value="French">French</option>
+                            <option value="Asian Fusion">Asian Fusion</option>
+                            <option value="Southern US">Southern US</option>
+                            <option value="Mediterranean">Mediterranean</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="cooking_method">Cooking Method</label>
+                        <select id="cooking_method" name="cooking_method">
+                            <option value="No Preference">No Preference</option>
+                            <option value="Braise">Braise</option>
+                            <option value="Grill">Grill</option>
+                            <option value="Roast">Roast</option>
+                            <option value="Pan-Sear">Pan-Sear</option>
+                            <option value="Slow-Cook">Slow-Cook</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="season">Season <span class="required">*</span></label>
+                        <select id="season" name="season" required>
+                            <option value="">-- Select --</option>
+                            <option value="Summer">Summer</option>
+                            <option value="Fall">Fall</option>
+                            <option value="Winter">Winter</option>
+                            <option value="Spring">Spring</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="effort_level">Effort Level <span class="required">*</span></label>
+                        <select id="effort_level" name="effort_level" required>
+                            <option value="">-- Select --</option>
+                            <option value="Low">Low (30-60 mins)</option>
+                            <option value="Medium">Medium (60-120 mins)</option>
+                            <option value="High">High (120+ mins)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">Generate My Pairing</button>
+            </form>
+        </div>
+
+        <div class="loading" id="loadingContainer">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">Profiling your wine...</div>
+        </div>
+
+        <div class="results" id="resultsContainer">
+            <div class="wine-profile" id="wineProfile"></div>
+            <div class="recipe-section" id="recipeSection"></div>
+            <div class="action-buttons">
+                <button class="btn btn-primary" onclick="tryAnotherPairing()">Try Another Pairing</button>
+                <button class="btn btn-secondary" onclick="resetForm()">Enter Different Wine</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = 'YOUR_MAKE_COM_WEBHOOK_URL_HERE'; // Replace this with your Make.com webhook URL
+
+        document.getElementById('pairingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Show loading state
+            document.getElementById('formContainer').style.display = 'none';
+            document.getElementById('loadingContainer').classList.add('active');
+            document.getElementById('resultsContainer').classList.remove('active');
+            
+            try {
+                // Send to Make.com webhook
+                const response = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                
+                const result = await response.json();
+                
+                // Check for errors
+                if (result.error) {
+                    displayError(result.error);
+                    return;
+                }
+                
+                // Display results
+                displayResults(result);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                displayError('An unexpected error occurred. Please try again.');
+            }
+        });
+
+        function displayResults(data) {
+            // Hide loading
+            document.getElementById('loadingContainer').classList.remove('active');
+            
+            // Display wine profile
+            const wineProfileHTML = `
+                <h2>Your Wine Profile</h2>
+                <h3>${data.wine.Wine_Name}</h3>
+                <p style="color: #666; margin-bottom: 20px;">${data.wine.Winery} • ${data.wine.Vintage} • ${data.wine.Region || 'N/A'}</p>
+                
+                <div class="attribute-grid">
+                    <div class="attribute">
+                        <div class="attribute-label">Body</div>
+                        <div class="attribute-value">${data.wine.Body || 'N/A'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Tannin</div>
+                        <div class="attribute-value">${data.wine.Tannin || 'N/A'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Acidity</div>
+                        <div class="attribute-value">${data.wine.Acidity || 'N/A'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Sweetness</div>
+                        <div class="attribute-value">${data.wine.Sweetness || 'N/A'}</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Complexity</div>
+                        <div class="attribute-value">${data.wine.Complexity || 'N/A'}/10</div>
+                    </div>
+                    <div class="attribute">
+                        <div class="attribute-label">Intensity</div>
+                        <div class="attribute-value">${data.wine.Flavor_Intensity || 'N/A'}/10</div>
+                    </div>
+                </div>
+                
+                <h3>Characteristics</h3>
+                <p><strong>Fruit Character:</strong> ${data.wine.Fruit_Character || 'N/A'}</p>
+                <p><strong>Flavor Profile:</strong> ${data.wine.Flavor_Profile || 'N/A'}</p>
+                <p><strong>Oak Influence:</strong> ${data.wine.Oak_Influence || 'N/A'}</p>
+            `;
+            
+            document.getElementById('wineProfile').innerHTML = wineProfileHTML;
+            
+            // Display recipe
+            const recipeHTML = `
+                <div class="dish-name">${data.recipe.Dish_Name || 'Your Perfect Pairing'}</div>
+                <div class="recipe-content">${data.recipe.Full_Recipe || 'Recipe details not available'}</div>
+                ${data.recipe.Estimated_Time ? `<p style="margin-top: 20px;"><strong>⏱️ Estimated Time:</strong> ${data.recipe.Estimated_Time}</p>` : ''}
+            `;
+            
+            document.getElementById('recipeSection').innerHTML = recipeHTML;
+            
+            // Show results
+            document.getElementById('resultsContainer').classList.add('active');
+        }
+
+        function displayError(message) {
+            document.getElementById('loadingContainer').classList.remove('active');
+            document.getElementById('resultsContainer').innerHTML = `
+                <div class="error-message">
+                    ${message}
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="resetForm()">Try Again</button>
+                </div>
+            `;
+            document.getElementById('resultsContainer').classList.add('active');
+        }
+
+        function tryAnotherPairing() {
+            // Keep wine info, reset preferences only
+            const wineFields = ['wine_name', 'winery', 'vintage'];
+            document.getElementById('resultsContainer').classList.remove('active');
+            document.getElementById('formContainer').style.display = 'block';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetForm() {
+            document.getElementById('pairingForm').reset();
+            document.getElementById('resultsContainer').classList.remove('active');
+            document.getElementById('formContainer').style.display = 'block';
+            
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

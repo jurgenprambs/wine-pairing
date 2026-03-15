@@ -1,57 +1,170 @@
 import jsPDF from 'jspdf';
 import { Pairing } from './types';
 
+function sanitize(text: string): string {
+  let s = text;
+  // Strip bold/italic markdown — remove all ** pairs
+  while (s.includes('**')) {
+    s = s.replace('**', '');
+  }
+  // Strip URLs and citations
+  s = s
+    .replace(/\s*\(\[?https?:\/\/[^\s)]+\]?\)*/g, '')
+    .replace(/\s*\[https?:\/\/[^\]]+\]/g, '')
+    .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\)]+\)/g, '')
+    .replace(/\s*https?:\/\/\S+/g, '')
+    .replace(/\s*\[\w+[\.\w]*\]/g, '');
+  // Replace unicode arrows and special chars that break jsPDF Times font
+  s = s.replace(/[\u2192\u2190\u2191\u2193\u279C\u27A1\u21D2\uFFEB]/g, '>');
+  s = s.replace(/\u2014/g, '--');
+  s = s.replace(/\u2013/g, '-');
+  s = s.replace(/[\u2018\u2019]/g, "'");
+  s = s.replace(/[\u201C\u201D]/g, '"');
+  s = s.replace(/\u2026/g, '...');
+  s = s.replace(/\u00B7/g, '-');
+  // Replace bullet char used inline
+  s = s.replace(/\u2022/g, '-');
+  return s.trim();
+}
+
+function splitBullets(text: string): string[] {
+  return sanitize(text)
+    .split(/\n|(?=\u2022)|(?=•)/)
+    .map((s) => s.replace(/^[•\-]\s*/, '').trim())
+    .filter((s) => s.length > 0);
+}
+
 export function exportPdf(pairing: Pairing): void {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 18;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 25;
   const contentWidth = pageWidth - margin * 2;
-  let y = margin;
+  const center = pageWidth / 2;
+  let y = 0;
 
   const burgundy: [number, number, number] = [74, 21, 40];
   const gold: [number, number, number] = [201, 168, 76];
-  const charcoal: [number, number, number] = [28, 28, 28];
-  const cream: [number, number, number] = [245, 240, 232];
+  const charcoal: [number, number, number] = [38, 38, 38];
+  const cream: [number, number, number] = [250, 247, 242];
+  const muted: [number, number, number] = [130, 120, 110];
 
-  // Background
-  doc.setFillColor(...cream);
-  doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
+  function paintBg() {
+    doc.setFillColor(...cream);
+    doc.rect(0, 0, pageWidth, pageHeight, 'F');
+  }
 
-  // Header
-  doc.setFont('times', 'bold');
-  doc.setFontSize(32);
-  doc.setTextColor(...burgundy);
-  doc.text('TERROIR', pageWidth / 2, y + 10, { align: 'center' });
-  y += 16;
+  function newPage() {
+    doc.addPage();
+    paintBg();
+    y = margin;
+  }
 
-  doc.setDrawColor(...gold);
-  doc.setLineWidth(0.5);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 8;
+  function checkSpace(needed: number) {
+    if (y + needed > pageHeight - 18) {
+      newPage();
+    }
+  }
 
-  // Wine info
+  function thinRule(width = 24) {
+    doc.setDrawColor(...gold);
+    doc.setLineWidth(0.15);
+    doc.line(center - width / 2, y, center + width / 2, y);
+    y += 6;
+  }
+
+  function sectionLabel(title: string) {
+    checkSpace(12);
+    doc.setFont('times', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...gold);
+    doc.text(title.toUpperCase(), margin, y);
+    y += 6;
+  }
+
+  function wrappedText(
+    text: string,
+    opts?: { italic?: boolean; fontSize?: number; color?: [number, number, number] }
+  ) {
+    const size = opts?.fontSize ?? 8.5;
+    const style = opts?.italic ? 'italic' : 'normal';
+    const color = opts?.color ?? charcoal;
+    doc.setFont('times', style);
+    doc.setFontSize(size);
+    doc.setTextColor(...color);
+    const lineHeight = size * 0.48;
+    const lines: string[] = doc.splitTextToSize(text, contentWidth);
+    for (const line of lines) {
+      checkSpace(lineHeight + 1);
+      doc.text(line, margin, y);
+      y += lineHeight;
+    }
+  }
+
+  function bulletItems(items: string[], indent = 0) {
+    doc.setFont('times', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...charcoal);
+    const lineHeight = 4;
+    const left = margin + indent;
+    const bulletWidth = contentWidth - indent - 6;
+    for (const item of items) {
+      const clean = sanitize(item);
+      const wrapped: string[] = doc.splitTextToSize(clean, bulletWidth);
+      checkSpace(wrapped.length * lineHeight + 2);
+      for (let j = 0; j < wrapped.length; j++) {
+        if (j === 0) {
+          doc.setFillColor(...gold);
+          doc.circle(left + 1, y - 1.2, 0.5, 'F');
+          doc.text(wrapped[j], left + 4, y);
+        } else {
+          doc.text(wrapped[j], left + 4, y);
+        }
+        y += lineHeight;
+      }
+    }
+  }
+
+  // ── Page 1: Wine Profile ──
+
+  paintBg();
+  y = margin + 5;
+
+  // Title
   doc.setFont('times', 'normal');
-  doc.setFontSize(11);
+  doc.setFontSize(26);
+  doc.setTextColor(...burgundy);
+  doc.text('T E R R O I R', center, y, { align: 'center' });
+  y += 7;
+
+  thinRule();
+
+  // Wine name
+  doc.setFont('times', 'italic');
+  doc.setFontSize(14);
   doc.setTextColor(...charcoal);
-  const wineTitle = `${pairing.wineInput.wineName} — ${pairing.wineInput.winery}, ${pairing.wineInput.vintage}`;
-  doc.text(wineTitle, pageWidth / 2, y, { align: 'center' });
-  y += 5;
+  const titleLines: string[] = doc.splitTextToSize(pairing.wineInput.wineName, contentWidth);
+  for (const line of titleLines) {
+    doc.text(line, center, y, { align: 'center' });
+    y += 6;
+  }
+
+  // Winery + vintage
+  doc.setFont('times', 'normal');
   doc.setFontSize(9);
-  doc.setTextColor(120, 120, 120);
-  doc.text(`Generated ${new Date(pairing.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, pageWidth / 2, y, { align: 'center' });
+  doc.setTextColor(...muted);
+  doc.text(
+    `${pairing.wineInput.winery}  ·  ${pairing.wineInput.vintage}`,
+    center,
+    y,
+    { align: 'center' }
+  );
   y += 10;
 
-  // Wine Profile section header
-  doc.setDrawColor(...gold);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 7;
-  doc.setFont('times', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(...burgundy);
-  doc.text('WINE PROFILE', margin, y);
-  y += 6;
+  thinRule();
+  y += 2;
 
+  // Wine profile sections
   const profileSections: [string, string][] = [
     ['Region & Terroir', pairing.wineProfile.regionTerroir],
     ['Important Notes', pairing.wineProfile.importantNotes],
@@ -61,152 +174,131 @@ export function exportPdf(pairing: Pairing): void {
   ];
 
   for (const [label, content] of profileSections) {
-    if (y > 255) {
-      doc.addPage();
-      doc.setFillColor(...cream);
-      doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
-      y = margin;
+    sectionLabel(label);
+    const bullets = splitBullets(content);
+    if (bullets.length > 1) {
+      bulletItems(bullets);
+    } else {
+      wrappedText(sanitize(content).replace(/^[•\-]\s*/, '').trim());
     }
-    doc.setFont('times', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...burgundy);
-    doc.text(label, margin, y);
-    y += 4.5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(...charcoal);
-    const plainContent = content.replace(/\*\*(.+?)\*\*/g, '$1');
-    const lines = doc.splitTextToSize(plainContent, contentWidth);
-    doc.text(lines, margin, y);
-    y += lines.length * 3.5 + 4;
+    y += 5;
   }
 
-  y += 2;
+  // ── Page 2: Recipe ──
 
-  // Recipe section header
-  doc.setDrawColor(...gold);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y, pageWidth - margin, y);
-  y += 7;
-  doc.setFont('times', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(...burgundy);
-  doc.text('RECIPE', margin, y);
+  newPage();
+  y += 3;
+
+  // Header
+  doc.setFont('times', 'normal');
+  doc.setFontSize(7.5);
+  doc.setTextColor(...gold);
+  doc.text('THE PAIRING', center, y, { align: 'center' });
   y += 8;
 
   // Dish name
-  doc.setFont('times', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(...charcoal);
-  doc.text(pairing.recipe.dishName, margin, y);
-  y += 6;
+  doc.setFont('times', 'italic');
+  doc.setFontSize(15);
+  doc.setTextColor(...burgundy);
+  const dishLines: string[] = doc.splitTextToSize(pairing.recipe.dishName, contentWidth);
+  for (const line of dishLines) {
+    doc.text(line, center, y, { align: 'center' });
+    y += 6.5;
+  }
+  y += 2;
+
+  thinRule();
 
   // Pairing rationale
-  doc.setFont('times', 'italic');
-  doc.setFontSize(9);
-  doc.setTextColor(80, 80, 80);
-  const rationaleLines = doc.splitTextToSize(pairing.recipe.pairingRationale, contentWidth);
-  doc.text(rationaleLines, margin, y);
-  y += rationaleLines.length * 4 + 4;
+  wrappedText(sanitize(pairing.recipe.pairingRationale), { italic: true, fontSize: 8, color: muted });
+  y += 7;
 
+  // Grouped ingredients
   if (pairing.recipe.ingredients && pairing.recipe.ingredients.length > 0) {
-    if (y > 255) {
-      doc.addPage();
-      doc.setFillColor(...cream);
-      doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
-      y = margin;
-    }
-    doc.setFont('times', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...burgundy);
-    doc.text('Ingredients', margin, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8.5);
-    doc.setTextColor(...charcoal);
-    for (const item of pairing.recipe.ingredients) {
-      if (y > 275) {
-        doc.addPage();
-        doc.setFillColor(...cream);
-        doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
-        y = margin;
-      }
-      doc.setFillColor(...gold);
-      doc.circle(margin + 1.5, y - 1, 0.6, 'F');
-      const itemLines = doc.splitTextToSize(item, contentWidth - 5);
-      doc.text(itemLines, margin + 5, y);
-      y += itemLines.length * 3.5 + 1;
+    sectionLabel('Ingredients');
+    for (const group of pairing.recipe.ingredients) {
+      checkSpace(12);
+      doc.setFont('times', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(...charcoal);
+      doc.text(sanitize(group.group), margin + 2, y);
+      y += 4;
+      bulletItems(group.items.map(sanitize), 2);
+      y += 2;
     }
     y += 3;
   }
 
-  const sections: [string, string][] = [
+  // Recipe sections
+  const recipeSections: [string, string][] = [
     ['Protein & Main Component', pairing.recipe.proteinComponent],
     ['Supporting Components', pairing.recipe.supportingComponents],
-    ['Sauce / Finishing', pairing.recipe.sauceFinishing],
-    ['Cooking Instructions', pairing.recipe.cookingInstructions],
+    ['Sauce & Finishing', pairing.recipe.sauceFinishing],
   ];
 
-  for (const [label, content] of sections) {
-    if (y > 260) {
-      doc.addPage();
-      doc.setFillColor(...cream);
-      doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
-      y = margin;
-    }
-    doc.setFont('times', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...burgundy);
-    doc.text(label, margin, y);
-    y += 4.5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(...charcoal);
-    const lines = doc.splitTextToSize(content, contentWidth);
-    doc.text(lines, margin, y);
-    y += lines.length * 3.8 + 4;
+  for (const [label, content] of recipeSections) {
+    sectionLabel(label);
+    wrappedText(sanitize(content));
+    y += 5;
   }
 
-  // Estimated time
-  doc.setFont('times', 'bold');
-  doc.setFontSize(9);
-  doc.setTextColor(...gold);
-  doc.text(`Estimated Time: ${pairing.recipe.estimatedTime}`, margin, y);
-  y += 6;
-
-  // Key Pairing Elements
-  if (pairing.recipe.keyPairingElements.length > 0) {
-    doc.setFont('times', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(...burgundy);
-    doc.text('Key Pairing Elements', margin, y);
-    y += 5;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+  // Method
+  sectionLabel('Method');
+  const instrClean = sanitize(pairing.recipe.cookingInstructions);
+  const steps = instrClean
+    .split('\n')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+  if (steps.length > 1) {
+    doc.setFont('times', 'normal');
+    doc.setFontSize(8.5);
     doc.setTextColor(...charcoal);
-    for (const el of pairing.recipe.keyPairingElements) {
-      if (y > 280) {
-        doc.addPage();
-        doc.setFillColor(...cream);
-        doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
-        y = margin;
+    for (const step of steps) {
+      const wrapped: string[] = doc.splitTextToSize(step, contentWidth - 2);
+      checkSpace(wrapped.length * 4 + 2);
+      for (const line of wrapped) {
+        doc.text(line, margin, y);
+        y += 4;
       }
-      doc.setFillColor(...gold);
-      doc.circle(margin + 1.5, y - 1, 0.8, 'F');
-      doc.text(el, margin + 5, y);
-      y += 4;
+      y += 0.5;
     }
+  } else {
+    wrappedText(instrClean);
+  }
+  y += 4;
+
+  // Estimated time
+  checkSpace(10);
+  doc.setFont('times', 'italic');
+  doc.setFontSize(8);
+  doc.setTextColor(...muted);
+  doc.text(pairing.recipe.estimatedTime, margin, y);
+  y += 7;
+
+  thinRule();
+
+  // Key pairing elements
+  if (pairing.recipe.keyPairingElements.length > 0) {
+    sectionLabel('Wine & Dish Harmony');
+    bulletItems(pairing.recipe.keyPairingElements);
+    y += 4;
   }
 
   // Footer
-  y = doc.internal.pageSize.getHeight() - 10;
+  const footerY = pageHeight - 12;
   doc.setDrawColor(...gold);
-  doc.setLineWidth(0.3);
-  doc.line(margin, y - 3, pageWidth - margin, y - 3);
+  doc.setLineWidth(0.15);
+  doc.line(center - 18, footerY - 2, center + 18, footerY - 2);
   doc.setFont('times', 'italic');
-  doc.setFontSize(8);
-  doc.setTextColor(120, 120, 120);
-  doc.text('Generated by Terroir', pageWidth / 2, y, { align: 'center' });
+  doc.setFontSize(7);
+  doc.setTextColor(...muted);
+  doc.text('Generated by Terroir', center, footerY, { align: 'center' });
+  const dateStr = new Date(pairing.createdAt).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+  doc.text(dateStr, center, footerY + 3.5, { align: 'center' });
 
   const slug = pairing.wineInput.wineName
     .toLowerCase()

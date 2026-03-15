@@ -1,6 +1,6 @@
 'use client';
 
-import { RecipeOutput, Pairing } from '@/lib/types';
+import { RecipeOutput, Pairing, IngredientGroup } from '@/lib/types';
 import ExportButtons from './ExportButtons';
 
 interface RecipeCardProps {
@@ -87,14 +87,23 @@ export default function RecipeCard({
         <div className="border-t border-border pt-5 space-y-0">
           {recipe.ingredients && recipe.ingredients.length > 0 && (
             <RecipeSection label="Ingredients">
-              <ul className="space-y-1.5">
-                {recipe.ingredients.map((item, i) => (
-                  <li key={i} className="flex items-start gap-2.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-gold/60 mt-1.5 shrink-0" />
-                    <span>{renderMarkdownInline(item)}</span>
-                  </li>
+              <div className="space-y-4">
+                {recipe.ingredients.map((group: IngredientGroup, gi: number) => (
+                  <div key={gi}>
+                    <div className="text-cream font-medium text-xs uppercase tracking-wider mb-1.5">
+                      {group.group}
+                    </div>
+                    <ul className="space-y-1">
+                      {group.items.map((item, i) => (
+                        <li key={i} className="flex items-start gap-2.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-gold/60 mt-1.5 shrink-0" />
+                          <span>{renderMarkdownInline(item)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </RecipeSection>
           )}
 

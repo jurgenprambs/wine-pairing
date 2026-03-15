@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { WineProfile, UserPreferences, RecipeOutput } from '@/lib/types';
+import { WineProfile, UserPreferences, RecipeOutput, IngredientGroup } from '@/lib/types';
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -20,10 +20,30 @@ function parseRecipeText(text: string): RecipeOutput {
   const dishName = get('DISH NAME', 'PAIRING RATIONALE');
   const pairingRationale = get('PAIRING RATIONALE', 'INGREDIENTS');
   const ingredientsRaw = get('INGREDIENTS', 'RECIPE');
-  const ingredients = ingredientsRaw
-    .split('\n')
-    .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
-    .filter((line) => line.length > 0);
+  const ingredients: IngredientGroup[] = [];
+  let currentGroup: IngredientGroup | null = null;
+
+  for (const line of ingredientsRaw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    const groupMatch = trimmed.match(/^(?:(?:For|for)\s+)?(?:the\s+)?(.+?):\s*$/);
+    const isBullet = /^[•\-\*]/.test(trimmed);
+
+    if (groupMatch && !isBullet) {
+      currentGroup = { group: groupMatch[1].replace(/\*\*/g, ''), items: [] };
+      ingredients.push(currentGroup);
+    } else {
+      const item = trimmed.replace(/^[•\-\*]\s*/, '').trim();
+      if (item) {
+        if (!currentGroup) {
+          currentGroup = { group: 'Ingredients', items: [] };
+          ingredients.push(currentGroup);
+        }
+        currentGroup.items.push(item);
+      }
+    }
+  }
   const proteinComponent = get(
     'Protein & Main Component',
     'Supporting Components'
@@ -138,10 +158,15 @@ PAIRING RATIONALE
 [2–3 sentences explaining how wine characteristics influenced the dish]
 
 INGREDIENTS
-• [ingredient 1 with quantity]
-• [ingredient 2 with quantity]
-• [ingredient 3 with quantity]
-(list ALL ingredients needed for the entire recipe)
+For the [component name]:
+• [ingredient with quantity]
+• [ingredient with quantity]
+
+For the [component name]:
+• [ingredient with quantity]
+• [ingredient with quantity]
+
+(Group ALL ingredients by the part of the dish they're used for, e.g. "For the Lamb:", "For the Sauce:", "For the Polenta:", etc.)
 
 RECIPE
 Protein & Main Component

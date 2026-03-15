@@ -29,6 +29,16 @@ function renderMarkdownInline(text: string): React.ReactNode[] {
   return parts;
 }
 
+function stripUrls(text: string): string {
+  return text
+    .replace(/\s*\(\[?https?:\/\/[^\s)]+\]?\)*/g, '')
+    .replace(/\s*\[https?:\/\/[^\]]+\]/g, '')
+    .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\)]+\)/g, '')
+    .replace(/\s*https?:\/\/\S+/g, '')
+    .replace(/\s*\[\w+[\.\w]*\]/g, '')
+    .trim();
+}
+
 function ProfileSection({
   icon,
   label,
@@ -38,7 +48,7 @@ function ProfileSection({
   label: string;
   content: string;
 }) {
-  const bullets = content
+  const bullets = stripUrls(content)
     .split(/\n|(?=•)/)
     .map((s) => s.replace(/^[•\-]\s*/, '').trim())
     .filter((s) => s.length > 0);

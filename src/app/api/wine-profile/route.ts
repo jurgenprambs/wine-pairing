@@ -53,13 +53,28 @@ Rules:
 - Use bullet points (•) to structure each field
 - Target 2 bullets per field, max 4 — no long paragraphs
 - Write as a passionate sommelier speaking to a curious customer
-- If the wine is unknown or obscure, use web search and make reasonable inferences based on grape, region, and vintage`,
+- If the wine is unknown or obscure, use web search and make reasonable inferences based on grape, region, and vintage
+- NEVER include URLs, citations, source links, or references like [decanter.com] or (https://...) in the output. Only include your own prose.`,
     });
 
     let text = response.output_text ?? '';
     text = text.replace(/```(?:json)?\s*/g, '').replace(/```\s*/g, '').trim();
 
     const profile = JSON.parse(text);
+
+    // Strip any URLs/citations the model may have included
+    for (const key of Object.keys(profile)) {
+      if (typeof profile[key] === 'string') {
+        profile[key] = profile[key]
+          .replace(/\s*\(\[?https?:\/\/[^\s)]+\]?\)*/g, '')
+          .replace(/\s*\[https?:\/\/[^\]]+\]/g, '')
+          .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\)]+\)/g, '')
+          .replace(/\s*https?:\/\/\S+/g, '')
+          .replace(/\s*\[\w+[\.\w]*\]/g, '')
+          .trim();
+      }
+    }
+
     return NextResponse.json(profile);
   } catch (error) {
     console.error('Wine profile error:', error);

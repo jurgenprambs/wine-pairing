@@ -20,10 +20,15 @@ export interface WineProfile {
   howItShouldTaste: string;
 }
 
+export interface IngredientGroup {
+  group: string;
+  items: string[];
+}
+
 export interface RecipeOutput {
   dishName: string;
   pairingRationale: string;
-  ingredients: string[];
+  ingredients: IngredientGroup[];
   proteinComponent: string;
   supportingComponents: string;
   sauceFinishing: string;

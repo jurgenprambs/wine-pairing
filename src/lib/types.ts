@@ -13,22 +13,17 @@ export interface UserPreferences {
 }
 
 export interface WineProfile {
-  body: string;
-  tannin: string;
-  acidity: string;
-  sweetness: string;
-  fruitCharacter: string;
-  flavorProfile: string;
-  oakInfluence: string;
-  umamiMinerality: string;
-  complexity: number;
-  flavorIntensity: number;
-  finishLength: string;
+  regionTerroir: string;
+  importantNotes: string;
+  flavors: string;
+  smellingVisualNotes: string;
+  howItShouldTaste: string;
 }
 
 export interface RecipeOutput {
   dishName: string;
   pairingRationale: string;
+  ingredients: string[];
   proteinComponent: string;
   supportingComponents: string;
   sauceFinishing: string;

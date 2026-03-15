@@ -1,5 +1,4 @@
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import { Pairing } from './types';
 
 export function exportPdf(pairing: Pairing): void {
@@ -53,36 +52,36 @@ export function exportPdf(pairing: Pairing): void {
   doc.text('WINE PROFILE', margin, y);
   y += 6;
 
-  const profileData = [
-    ['Body', pairing.wineProfile.body],
-    ['Tannin', pairing.wineProfile.tannin],
-    ['Acidity', pairing.wineProfile.acidity],
-    ['Sweetness', pairing.wineProfile.sweetness],
-    ['Fruit Character', pairing.wineProfile.fruitCharacter],
-    ['Flavor Profile', pairing.wineProfile.flavorProfile],
-    ['Oak Influence', pairing.wineProfile.oakInfluence],
-    ['Umami / Minerality', pairing.wineProfile.umamiMinerality],
-    ['Complexity', `${pairing.wineProfile.complexity} / 10`],
-    ['Flavor Intensity', `${pairing.wineProfile.flavorIntensity} / 10`],
-    ['Finish Length', pairing.wineProfile.finishLength],
+  const profileSections: [string, string][] = [
+    ['Region & Terroir', pairing.wineProfile.regionTerroir],
+    ['Important Notes', pairing.wineProfile.importantNotes],
+    ['Flavors', pairing.wineProfile.flavors],
+    ['Smelling & Visual Notes', pairing.wineProfile.smellingVisualNotes],
+    ['How It Should Taste', pairing.wineProfile.howItShouldTaste],
   ];
 
-  autoTable(doc, {
-    startY: y,
-    head: [],
-    body: profileData,
-    theme: 'plain',
-    margin: { left: margin, right: margin },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 42, textColor: burgundy, font: 'times', fontSize: 9 },
-      1: { textColor: charcoal, font: 'helvetica', fontSize: 9 },
-    },
-    styles: { cellPadding: 1.5 },
-    didDrawPage: () => {},
-  });
+  for (const [label, content] of profileSections) {
+    if (y > 255) {
+      doc.addPage();
+      doc.setFillColor(...cream);
+      doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
+      y = margin;
+    }
+    doc.setFont('times', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...burgundy);
+    doc.text(label, margin, y);
+    y += 4.5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...charcoal);
+    const plainContent = content.replace(/\*\*(.+?)\*\*/g, '$1');
+    const lines = doc.splitTextToSize(plainContent, contentWidth);
+    doc.text(lines, margin, y);
+    y += lines.length * 3.5 + 4;
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  y = (doc as any).lastAutoTable.finalY + 8;
+  y += 2;
 
   // Recipe section header
   doc.setDrawColor(...gold);
@@ -109,6 +108,37 @@ export function exportPdf(pairing: Pairing): void {
   const rationaleLines = doc.splitTextToSize(pairing.recipe.pairingRationale, contentWidth);
   doc.text(rationaleLines, margin, y);
   y += rationaleLines.length * 4 + 4;
+
+  if (pairing.recipe.ingredients && pairing.recipe.ingredients.length > 0) {
+    if (y > 255) {
+      doc.addPage();
+      doc.setFillColor(...cream);
+      doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
+      y = margin;
+    }
+    doc.setFont('times', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(...burgundy);
+    doc.text('Ingredients', margin, y);
+    y += 5;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(...charcoal);
+    for (const item of pairing.recipe.ingredients) {
+      if (y > 275) {
+        doc.addPage();
+        doc.setFillColor(...cream);
+        doc.rect(0, 0, pageWidth, doc.internal.pageSize.getHeight(), 'F');
+        y = margin;
+      }
+      doc.setFillColor(...gold);
+      doc.circle(margin + 1.5, y - 1, 0.6, 'F');
+      const itemLines = doc.splitTextToSize(item, contentWidth - 5);
+      doc.text(itemLines, margin + 5, y);
+      y += itemLines.length * 3.5 + 1;
+    }
+    y += 3;
+  }
 
   const sections: [string, string][] = [
     ['Protein & Main Component', pairing.recipe.proteinComponent],

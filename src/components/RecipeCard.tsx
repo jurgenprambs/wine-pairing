@@ -85,6 +85,19 @@ export default function RecipeCard({
         </p>
 
         <div className="border-t border-border pt-5 space-y-0">
+          {recipe.ingredients && recipe.ingredients.length > 0 && (
+            <RecipeSection label="Ingredients">
+              <ul className="space-y-1.5">
+                {recipe.ingredients.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-gold/60 mt-1.5 shrink-0" />
+                    <span>{renderMarkdownInline(item)}</span>
+                  </li>
+                ))}
+              </ul>
+            </RecipeSection>
+          )}
+
           <RecipeSection label="Protein & Main Component">
             <MarkdownText text={recipe.proteinComponent} />
           </RecipeSection>

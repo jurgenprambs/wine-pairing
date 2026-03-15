@@ -6,66 +6,120 @@ interface WineProfileCardProps {
   profile: WineProfile;
 }
 
-function BarIndicator({ value, max = 10 }: { value: number; max?: number }) {
-  const pct = Math.min(Math.max((value / max) * 100, 0), 100);
+function renderMarkdownInline(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  const regex = /\*\*(.+?)\*\*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    parts.push(
+      <strong key={match.index} className="font-semibold text-cream">
+        {match[1]}
+      </strong>
+    );
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts;
+}
+
+function ProfileSection({
+  icon,
+  label,
+  content,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  content: string;
+}) {
+  const bullets = content
+    .split(/\n|(?=•)/)
+    .map((s) => s.replace(/^[•\-]\s*/, '').trim())
+    .filter((s) => s.length > 0);
+
   return (
-    <div className="flex items-center gap-3">
-      <div className="bar-track flex-1">
-        <div className="bar-fill" style={{ width: `${pct}%` }} />
+    <div className="py-5 border-b border-border last:border-b-0">
+      <div className="flex items-center gap-2.5 mb-3">
+        <span className="text-gold">{icon}</span>
+        <h3 className="text-gold text-xs font-medium uppercase tracking-wider">
+          {label}
+        </h3>
       </div>
-      <span className="text-gold text-sm font-medium w-8 text-right font-[family-name:var(--font-display)]">
-        {value}/{max}
-      </span>
+      <ul className="space-y-2 pl-7">
+        {bullets.map((bullet, i) => (
+          <li key={i} className="flex items-start gap-2.5 text-sm text-cream/85 leading-relaxed">
+            <span className="w-1.5 h-1.5 rounded-full bg-gold/50 mt-1.5 shrink-0" />
+            <span>{renderMarkdownInline(bullet)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
-
-const fieldLabels: { key: keyof WineProfile; label: string }[] = [
-  { key: 'body', label: 'Body' },
-  { key: 'tannin', label: 'Tannin' },
-  { key: 'acidity', label: 'Acidity' },
-  { key: 'sweetness', label: 'Sweetness' },
-  { key: 'fruitCharacter', label: 'Fruit Character' },
-  { key: 'flavorProfile', label: 'Flavor Profile' },
-  { key: 'oakInfluence', label: 'Oak Influence' },
-  { key: 'umamiMinerality', label: 'Umami / Minerality' },
-  { key: 'finishLength', label: 'Finish / Length' },
-];
 
 export default function WineProfileCard({ profile }: WineProfileCardProps) {
   return (
     <div className="fade-in-up">
       <div className="section-label mb-4">01 / Wine Profile</div>
-      <div className="glass-panel p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
-          {fieldLabels.map(({ key, label }) => (
-            <div key={key}>
-              <div className="text-gold-muted text-xs font-medium uppercase tracking-wider mb-1">
-                {label}
-              </div>
-              <div className="text-cream text-sm leading-relaxed">
-                {String(profile[key])}
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="glass-panel p-6 md:p-8">
+        <ProfileSection
+          icon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+          }
+          label="Region & Terroir"
+          content={profile.regionTerroir}
+        />
 
-        <div className="mt-6 pt-5 border-t border-border">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <div className="text-gold-muted text-xs font-medium uppercase tracking-wider mb-2">
-                Complexity
-              </div>
-              <BarIndicator value={profile.complexity} />
-            </div>
-            <div>
-              <div className="text-gold-muted text-xs font-medium uppercase tracking-wider mb-2">
-                Flavor Intensity
-              </div>
-              <BarIndicator value={profile.flavorIntensity} />
-            </div>
-          </div>
-        </div>
+        <ProfileSection
+          icon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="Important Notes"
+          content={profile.importantNotes}
+        />
+
+        <ProfileSection
+          icon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          }
+          label="Flavors"
+          content={profile.flavors}
+        />
+
+        <ProfileSection
+          icon={
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          }
+          label="Smelling & Visual Notes"
+          content={profile.smellingVisualNotes}
+        />
+
+        <ProfileSection
+          icon={
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          }
+          label="How It Should Taste"
+          content={profile.howItShouldTaste}
+        />
+
       </div>
     </div>
   );

@@ -18,7 +18,12 @@ function parseRecipeText(text: string): RecipeOutput {
   };
 
   const dishName = get('DISH NAME', 'PAIRING RATIONALE');
-  const pairingRationale = get('PAIRING RATIONALE', 'RECIPE');
+  const pairingRationale = get('PAIRING RATIONALE', 'INGREDIENTS');
+  const ingredientsRaw = get('INGREDIENTS', 'RECIPE');
+  const ingredients = ingredientsRaw
+    .split('\n')
+    .map((line) => line.replace(/^[•\-\*]\s*/, '').trim())
+    .filter((line) => line.length > 0);
   const proteinComponent = get(
     'Protein & Main Component',
     'Supporting Components'
@@ -36,6 +41,7 @@ function parseRecipeText(text: string): RecipeOutput {
   return {
     dishName,
     pairingRationale,
+    ingredients,
     proteinComponent,
     supportingComponents,
     sauceFinishing,
@@ -60,21 +66,25 @@ export async function POST(request: NextRequest) {
     }
 
     const response = await client.responses.create({
-      model: 'gpt-4o',
+      model: 'gpt-5.4',
       tools: [{ type: 'web_search_preview' }],
       instructions: `You are an expert chef and sommelier who designs elegant dishes that structurally complement a wine profile. Your goal is to create a restaurant-quality but home-cookable recipe based on wine characteristics and user constraints.`,
       input: `WINE PROFILE
-Body: ${wineProfile.body}
-Tannin: ${wineProfile.tannin}
-Acidity: ${wineProfile.acidity}
-Sweetness: ${wineProfile.sweetness}
-Fruit Character: ${wineProfile.fruitCharacter}
-Flavor Profile / Dominant Aromas: ${wineProfile.flavorProfile}
-Oak Influence: ${wineProfile.oakInfluence}
-Umami / Minerality: ${wineProfile.umamiMinerality}
-Complexity (1–10): ${wineProfile.complexity}
-Flavor Intensity (1–10): ${wineProfile.flavorIntensity}
-Finish / Length: ${wineProfile.finishLength}
+
+Region & Terroir:
+${wineProfile.regionTerroir}
+
+Important Notes about the Wine:
+${wineProfile.importantNotes}
+
+Flavors:
+${wineProfile.flavors}
+
+Smelling & Visual Notes:
+${wineProfile.smellingVisualNotes}
+
+How It Should Taste:
+${wineProfile.howItShouldTaste}
 
 USER PREFERENCES
 Cuisine Style: ${preferences.cuisineStyle}
@@ -85,44 +95,35 @@ Main Ingredient Category: ${preferences.mainIngredient}
 
 INTERNAL PROCESS (DO NOT OUTPUT)
 
-Step 1 — Determine Dish Structure
-From the wine profile determine: ideal protein weight, cooking intensity, sauce richness, dish format (e.g., plated entrée, rustic stew, composed bowl, grilled dish).
+Step 1 — Analyze the Wine's Character
+Read the wine profile carefully. Use the flavors, tasting notes, and texture to determine: ideal protein weight, cooking intensity, sauce richness, dish format (e.g., plated entrée, rustic stew, composed bowl, grilled dish).
 Guidelines:
-Full body + high tannin → fatty or braised dishes
-Light body + high acid → delicate preparations
+Full-bodied + tannic → fatty or braised dishes
+Light-bodied + high acid → delicate preparations
 Medium body → roasted or pan-seared dishes
-High acidity → supports richness
+High acidity → supports richness in the dish
 Low acidity → leaner foods
+Sweet/residual sugar → can handle spice
 
 Step 2 — Build a Flavor Bridge
-Use flavor profile and fruit character to choose ingredients that echo or contrast the wine.
-Earthy → mushrooms, truffle, root vegetables
-Floral → herbs, herb crusts
-Spice → spice rubs, pepper crusts
-Fruit → fruit reductions, savory fruit elements
+Use the specific flavors and aromas described in the profile to choose ingredients that echo or contrast the wine.
+Earthy notes → mushrooms, truffle, root vegetables
+Floral/herbal notes → fresh herbs, herb crusts
+Spice notes → spice rubs, pepper crusts
+Fruit notes → fruit reductions, savory fruit elements
+Oxidative/nutty notes → browned butter, toasted nuts, caramelized elements
 
-Step 3 — Apply Technique Logic
-Oak Influence → cooking style:
-None/Subtle → lighter cooking
-Moderate → roasting, caramelization
-High → char, smoke, deep reduction
-
-Step 4 — Set Dish Complexity
-1–4 → 2–3 components
-5–7 → 3–4 components
-8–10 → 4–5 components
-
-Step 5 — Ingredient Constraints
+Step 3 — Ingredient Constraints
 Respect Main Ingredient Category:
 Red Meat: beef, lamb, pork, duck, game
 White Meat: chicken, turkey, lean pork, rabbit
 Vegetarian: vegetables, legumes, tofu, tempeh, eggs, dairy
 If wine profile conflicts with the category, adapt creatively.
 
-Step 6 — Seasonal Integration
+Step 4 — Seasonal Integration
 Incorporate ingredients appropriate for the selected season.
 
-Step 7 — Effort Level (STRICTLY ENFORCE THESE TIME LIMITS)
+Step 5 — Effort Level (STRICTLY ENFORCE THESE TIME LIMITS)
 Low → quick cooking, minimal prep. TOTAL TIME MUST BE UNDER 30 MINUTES.
 Medium → moderate techniques. TOTAL TIME MUST BE BETWEEN 30 AND 90 MINUTES.
 High → long braises, layered techniques. TOTAL TIME MUST BE OVER 90 MINUTES.
@@ -135,6 +136,12 @@ DISH NAME
 
 PAIRING RATIONALE
 [2–3 sentences explaining how wine characteristics influenced the dish]
+
+INGREDIENTS
+• [ingredient 1 with quantity]
+• [ingredient 2 with quantity]
+• [ingredient 3 with quantity]
+(list ALL ingredients needed for the entire recipe)
 
 RECIPE
 Protein & Main Component
@@ -161,7 +168,7 @@ KEY PAIRING ELEMENTS
 STRICT RULES
 • Produce a real, cookable recipe
 • Respect cuisine style and cooking method
-• Respect effort level timing: Low < 30 min, Medium 30–90 min, High > 90 min
+• Respect effort level timing for TOTAL TIME: Low < 30 min, Medium 30–90 min, High > 90 min!! Very important!!!
 • Integrate seasonal ingredients
 • Maintain logical connections between wine traits and dish elements
 • Do not mention the wine by name

@@ -18,6 +18,7 @@ export interface WineProfile {
   flavors: string;
   smellingVisualNotes: string;
   howItShouldTaste: string;
+  isInferred?: boolean;
 }
 
 export interface IngredientGroup {

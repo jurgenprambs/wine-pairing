@@ -78,6 +78,20 @@ export default function WineProfileCard({ profile }: WineProfileCardProps) {
     <div className="fade-in-up">
       <div className="section-label mb-4">01 / Wine Profile</div>
       <div className="glass-panel p-6 md:p-8">
+        {profile.isInferred && (
+          <div className="mb-5 pb-5 border-b border-border">
+            <div className="flex items-start gap-2.5 bg-gold/5 border border-gold/20 rounded-lg p-3.5">
+              <svg className="w-4 h-4 text-gold mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-cream/60 text-xs leading-relaxed">
+                We couldn&apos;t find this exact wine in our records, so our sommelier
+                put together their best assessment based on the name, winery, and
+                vintage you provided. Think of it as an educated pour.
+              </p>
+            </div>
+          </div>
+        )}
         <ProfileSection
           icon={
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

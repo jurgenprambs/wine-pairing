@@ -33,7 +33,8 @@ Return this exact JSON structure:
   "importantNotes": "",
   "flavors": "",
   "smellingVisualNotes": "",
-  "howItShouldTaste": ""
+  "howItShouldTaste": "",
+  "isInferred": false
 }
 
 Field instructions — BE SUCCINCT. Use bullet points (•) where it makes sense. Aim for 2 bullet points or sentences per field, maximum 4.
@@ -53,7 +54,8 @@ Rules:
 - Use bullet points (•) to structure each field
 - Target 2 bullets per field, max 4 — no long paragraphs
 - Write as a passionate sommelier speaking to a curious customer
-- If the wine is unknown or obscure, use web search and make reasonable inferences based on grape, region, and vintage
+- If you cannot find specific information about this exact wine after searching, set "isInferred" to true and make your best educated inferences based on the grape variety, region, winery style, and vintage. Still produce a complete, high-quality profile.
+- If you DID find the wine, set "isInferred" to false
 - NEVER include URLs, citations, source links, or references like [decanter.com] or (https://...) in the output. Only include your own prose.`,
     });
 
@@ -80,6 +82,17 @@ Rules:
     console.error('Wine profile error:', error);
     const message =
       error instanceof Error ? error.message : 'Failed to generate wine profile';
-    return NextResponse.json({ error: message }, { status: 500 });
+
+    const isQuotaError =
+      message.includes('insufficient_quota') ||
+      message.includes('rate_limit') ||
+      message.includes('billing') ||
+      message.includes('exceeded') ||
+      message.includes('429');
+
+    return NextResponse.json(
+      { error: message, isQuotaError },
+      { status: isQuotaError ? 429 : 500 }
+    );
   }
 }

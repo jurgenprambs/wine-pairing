@@ -207,6 +207,17 @@ STRICT RULES
     console.error('Recipe generation error:', error);
     const message =
       error instanceof Error ? error.message : 'Failed to generate recipe';
-    return NextResponse.json({ error: message }, { status: 500 });
+
+    const isQuotaError =
+      message.includes('insufficient_quota') ||
+      message.includes('rate_limit') ||
+      message.includes('billing') ||
+      message.includes('exceeded') ||
+      message.includes('429');
+
+    return NextResponse.json(
+      { error: message, isQuotaError },
+      { status: isQuotaError ? 429 : 500 }
+    );
   }
 }

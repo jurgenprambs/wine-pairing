@@ -73,27 +73,53 @@ function ErrorCard({
   message: string;
   onRetry: () => void;
 }) {
+  const isQuota =
+    message.includes('insufficient_quota') ||
+    message.includes('rate_limit') ||
+    message.includes('billing') ||
+    message.includes('exceeded') ||
+    message.includes('429');
+
   return (
     <div className="fade-in-up glass-panel border-error/30 p-6 text-center">
-      <svg
-        className="w-10 h-10 text-error mx-auto mb-3"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={1.5}
-          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
-        />
-      </svg>
-      <p className="text-cream text-sm font-medium mb-1">
-        Something went wrong. Please try again.
-      </p>
-      <p className="text-cream/40 text-xs mb-4">{message}</p>
+      {isQuota ? (
+        <>
+          <div className="text-4xl mb-3">🍽️</div>
+          <p className="font-[family-name:var(--font-display)] text-cream text-lg font-semibold mb-2">
+            We ate through our budget
+          </p>
+          <p className="text-cream/70 text-sm mb-1 max-w-sm mx-auto">
+            Turns out our sommelier has quite the appetite — we&apos;ve run out of
+            AI credits for now. The kitchen is temporarily closed while we
+            top up the tab.
+          </p>
+          <p className="text-cream/30 text-xs mb-4">
+            (Translation: our OpenAI credits are spent. Check back soon!)
+          </p>
+        </>
+      ) : (
+        <>
+          <svg
+            className="w-10 h-10 text-error mx-auto mb-3"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1.5}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"
+            />
+          </svg>
+          <p className="text-cream text-sm font-medium mb-1">
+            Something went wrong. Please try again.
+          </p>
+          <p className="text-cream/40 text-xs mb-4">{message}</p>
+        </>
+      )}
       <button onClick={onRetry} className="btn-outline-gold">
-        Try Again
+        {isQuota ? 'Try Again Anyway' : 'Try Again'}
       </button>
     </div>
   );

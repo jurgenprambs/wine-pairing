@@ -4,6 +4,8 @@ import { WineProfile } from '@/lib/types';
 
 interface WineProfileCardProps {
   profile: WineProfile;
+  /** When set, shows framing for floor staff / servers (no recipe flow) */
+  variant?: 'default' | 'floorStaff';
 }
 
 function renderMarkdownInline(text: string): React.ReactNode[] {
@@ -73,10 +75,21 @@ function ProfileSection({
   );
 }
 
-export default function WineProfileCard({ profile }: WineProfileCardProps) {
+export default function WineProfileCard({
+  profile,
+  variant = 'default',
+}: WineProfileCardProps) {
   return (
     <div className="fade-in-up">
-      <div className="section-label mb-4">01 / Wine Profile</div>
+      <div className="mb-4">
+        <div className="section-label">01 / Wine Profile</div>
+        {variant === 'floorStaff' && (
+          <p className="text-cream/55 text-sm mt-2 max-w-xl leading-relaxed">
+            Talking points for the floor: region, style, and what guests will
+            taste and smell — without building a full pairing or recipe.
+          </p>
+        )}
+      </div>
       <div className="glass-panel p-6 md:p-8">
         {profile.isInferred && (
           <div className="mb-5 pb-5 border-b border-border">

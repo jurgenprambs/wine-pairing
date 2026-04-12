@@ -5,6 +5,7 @@ import { WineInput, UserPreferences } from '@/lib/types';
 
 interface WineFormProps {
   onSubmit: (wineInput: WineInput, preferences: UserPreferences) => void;
+  onLearnAboutWine: (wineInput: WineInput) => void;
   isLoading: boolean;
 }
 
@@ -43,7 +44,11 @@ const effortLevels: {
   { value: 'High', label: 'High', desc: 'Fine Dining at Home' },
 ];
 
-export default function WineForm({ onSubmit, isLoading }: WineFormProps) {
+export default function WineForm({
+  onSubmit,
+  onLearnAboutWine,
+  isLoading,
+}: WineFormProps) {
   const [wineName, setWineName] = useState('');
   const [winery, setWinery] = useState('');
   const [vintage, setVintage] = useState('');
@@ -113,6 +118,28 @@ export default function WineForm({ onSubmit, isLoading }: WineFormProps) {
               required
             />
           </div>
+        </div>
+
+        <div className="mt-5 pt-5 border-t border-border">
+          <button
+            type="button"
+            onClick={() =>
+              onLearnAboutWine({
+                wineName: wineName.trim(),
+                winery: winery.trim(),
+                vintage: vintage.trim(),
+              })
+            }
+            disabled={
+              isLoading || !wineName.trim() || !winery.trim() || !vintage.trim()
+            }
+            className="w-full py-3 px-4 rounded-lg border border-gold/40 bg-transparent text-gold text-sm font-[family-name:var(--font-display)] tracking-wide hover:bg-gold/10 hover:border-gold/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Learn about the wine
+          </button>
+          <p className="text-cream/35 text-[11px] mt-2 text-center leading-snug">
+            Tasting notes only — no recipe. Handy for servers and the floor.
+          </p>
         </div>
       </div>
 

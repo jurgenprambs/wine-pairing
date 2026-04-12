@@ -152,6 +152,9 @@ export default function Home() {
   const [lastWineInput, setLastWineInput] = useState<WineInput | null>(null);
   const [lastPreferences, setLastPreferences] =
     useState<UserPreferences | null>(null);
+  /** True when user used "Learn about the wine" — show profile only, no recipe */
+  const [profileOnly, setProfileOnly] = useState(false);
+  const [lastAction, setLastAction] = useState<'learn' | 'pairing' | null>(null);
 
   const generateRecipe = useCallback(
     async (profile: WineProfile, prefs: UserPreferences, wine: WineInput) => {
@@ -194,6 +197,44 @@ export default function Home() {
     []
   );
 
+  const fetchWineProfileOnly = useCallback(
+    async (wineInput: WineInput) => {
+      setLoadingPhase('profile');
+      setError(null);
+      setWineProfile(null);
+      setRecipe(null);
+      setCurrentPairing(null);
+      setProfileOnly(true);
+      setLastWineInput(wineInput);
+      setLastAction('learn');
+
+      try {
+        const res = await fetch('/api/wine-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wineInput }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(
+            data.error || `Wine profile API error: ${res.status}`
+          );
+        }
+        const profile: WineProfile = await res.json();
+        setWineProfile(profile);
+      } catch (err) {
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to generate wine profile'
+        );
+      } finally {
+        setLoadingPhase(null);
+      }
+    },
+    []
+  );
+
   const handleSubmit = useCallback(
     async (wineInput: WineInput, preferences: UserPreferences) => {
       setLoadingPhase('profile');
@@ -201,8 +242,10 @@ export default function Home() {
       setWineProfile(null);
       setRecipe(null);
       setCurrentPairing(null);
+      setProfileOnly(false);
       setLastWineInput(wineInput);
       setLastPreferences(preferences);
+      setLastAction('pairing');
 
       try {
         const res = await fetch('/api/wine-profile', {
@@ -244,16 +287,21 @@ export default function Home() {
     setCurrentPairing(pairing);
     setLastWineInput(pairing.wineInput);
     setLastPreferences(pairing.preferences);
+    setProfileOnly(false);
+    setLastAction('pairing');
     setError(null);
     setLoadingPhase(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const handleRetry = useCallback(() => {
-    if (lastWineInput && lastPreferences) {
-      handleSubmit(lastWineInput, lastPreferences);
+    if (!lastWineInput) return;
+    if (lastAction === 'learn') {
+      void fetchWineProfileOnly(lastWineInput);
+    } else if (lastPreferences) {
+      void handleSubmit(lastWineInput, lastPreferences);
     }
-  }, [lastWineInput, lastPreferences, handleSubmit]);
+  }, [lastWineInput, lastAction, lastPreferences, handleSubmit, fetchWineProfileOnly]);
 
   const isLoading = loadingPhase !== null;
 
@@ -278,7 +326,11 @@ export default function Home() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Left column */}
           <div className="w-full lg:w-[40%] lg:min-w-[380px] shrink-0">
-            <WineForm onSubmit={handleSubmit} isLoading={isLoading} />
+            <WineForm
+              onSubmit={handleSubmit}
+              onLearnAboutWine={fetchWineProfileOnly}
+              isLoading={isLoading}
+            />
             <SavedPairingsPanel
               refreshKey={savedRefreshKey}
               onLoad={handleLoadPairing}
@@ -292,10 +344,13 @@ export default function Home() {
             {loadingPhase && <LoadingSkeleton phase={loadingPhase} />}
 
             {!error && !loadingPhase && wineProfile && (
-              <WineProfileCard profile={wineProfile} />
+              <WineProfileCard
+                profile={wineProfile}
+                variant={profileOnly ? 'floorStaff' : 'default'}
+              />
             )}
 
-            {!error && !loadingPhase && recipe && currentPairing && (
+            {!error && !loadingPhase && !profileOnly && recipe && currentPairing && (
               <RecipeCard
                 recipe={recipe}
                 pairing={currentPairing}

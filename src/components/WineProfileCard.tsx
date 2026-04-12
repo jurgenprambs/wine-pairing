@@ -85,12 +85,33 @@ export default function WineProfileCard({
         <div className="section-label">01 / Wine Profile</div>
         {variant === 'floorStaff' && (
           <p className="text-cream/55 text-sm mt-2 max-w-xl leading-relaxed">
-            Talking points for the floor: region, style, and what guests will
-            taste and smell — without building a full pairing or recipe.
+            Start with <strong className="text-cream/70 font-medium">At a glance</strong> for
+            quick guest conversation — then the full profile below. No recipe;
+            perfect for the floor.
           </p>
         )}
       </div>
       <div className="glass-panel p-6 md:p-8">
+        {profile.patronHighlights && profile.patronHighlights.length > 0 && (
+          <div className="mb-6 pb-6 border-b border-border">
+            <div className="text-gold text-xs font-medium uppercase tracking-wider mb-3">
+              At a glance — for your guest
+            </div>
+            <ul className="space-y-2.5">
+              {profile.patronHighlights.map((line, i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 text-sm text-cream leading-relaxed"
+                >
+                  <span className="font-[family-name:var(--font-display)] text-gold font-semibold tabular-nums shrink-0 w-5">
+                    {i + 1}.
+                  </span>
+                  <span>{renderMarkdownInline(stripUrls(line))}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
         {profile.isInferred && (
           <div className="mb-5 pb-5 border-b border-border">
             <div className="flex items-start gap-2.5 bg-gold/5 border border-gold/20 rounded-lg p-3.5">

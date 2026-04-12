@@ -164,6 +164,13 @@ export function exportPdf(pairing: Pairing): void {
   thinRule();
   y += 2;
 
+  const highlights = pairing.wineProfile.patronHighlights;
+  if (highlights && highlights.length > 0) {
+    sectionLabel('At a glance — for your guest');
+    bulletItems(highlights.map((h) => sanitize(h)));
+    y += 5;
+  }
+
   // Wine profile sections
   const profileSections: [string, string][] = [
     ['Region & Terroir', pairing.wineProfile.regionTerroir],

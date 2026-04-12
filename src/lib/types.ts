@@ -13,6 +13,8 @@ export interface UserPreferences {
 }
 
 export interface WineProfile {
+  /** 3–4 short lines for servers: tasting, winery story, food direction */
+  patronHighlights?: string[];
   regionTerroir: string;
   importantNotes: string;
   flavors: string;

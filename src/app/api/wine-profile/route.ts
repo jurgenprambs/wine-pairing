@@ -29,6 +29,7 @@ Return ONLY a valid JSON object with no markdown, no code fences, no explanation
 
 Return this exact JSON structure:
 {
+  "patronHighlights": ["", "", "", ""],
   "regionTerroir": "",
   "importantNotes": "",
   "flavors": "",
@@ -37,7 +38,13 @@ Return this exact JSON structure:
   "isInferred": false
 }
 
-Field instructions — BE SUCCINCT. Use bullet points (•) where it makes sense. Aim for 2 bullet points or sentences per field, maximum 4.
+Field instructions — BE SUCCINCT. Use bullet points (•) where it makes sense in the prose fields. Aim for 2 bullet points or sentences per field, maximum 4.
+
+0. "patronHighlights" — EXACTLY 3 or 4 separate strings in the array (not one long string). These are what a server would say to a guest choosing a bottle — the most important takeaways. Cover these angles across the items (combine where natural; order can vary):
+   - Standout tasting notes (what they'll taste/smell first; body, acid, tannin in plain language)
+   - One memorable or "cool" fact about the wine, winery, vintage, or region (story hook)
+   - Food pairing direction (styles of dishes that work — e.g. "rich fish", "herb-roasted lamb", "aged cheese" — NOT a full recipe; general guidance only)
+   Each string should be ONE short sentence, punchy, guest-facing. No bullets inside the strings.
 
 1. "regionTerroir" — Region, terroir, and what it's known for. Keep it tight: where, what soil/climate, and how that shapes the wine. 2–4 bullet points.
 
@@ -64,17 +71,31 @@ Rules:
 
     const profile = JSON.parse(text);
 
+    function cleanStr(s: string): string {
+      return s
+        .replace(/\s*\(\[?https?:\/\/[^\s)]+\]?\)*/g, '')
+        .replace(/\s*\[https?:\/\/[^\]]+\]/g, '')
+        .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\)]+\)/g, '')
+        .replace(/\s*https?:\/\/\S+/g, '')
+        .replace(/\s*\[\w+[\.\w]*\]/g, '')
+        .trim();
+    }
+
     // Strip any URLs/citations the model may have included
     for (const key of Object.keys(profile)) {
-      if (typeof profile[key] === 'string') {
-        profile[key] = profile[key]
-          .replace(/\s*\(\[?https?:\/\/[^\s)]+\]?\)*/g, '')
-          .replace(/\s*\[https?:\/\/[^\]]+\]/g, '')
-          .replace(/\s*\[[^\]]*\]\(https?:\/\/[^\)]+\)/g, '')
-          .replace(/\s*https?:\/\/\S+/g, '')
-          .replace(/\s*\[\w+[\.\w]*\]/g, '')
-          .trim();
+      const v = profile[key];
+      if (typeof v === 'string') {
+        profile[key] = cleanStr(v);
+      } else if (Array.isArray(v) && key === 'patronHighlights') {
+        profile[key] = v
+          .filter((item: unknown) => typeof item === 'string' && item.trim().length > 0)
+          .map((item: string) => cleanStr(item))
+          .slice(0, 4);
       }
+    }
+
+    if (!Array.isArray(profile.patronHighlights)) {
+      profile.patronHighlights = [];
     }
 
     return NextResponse.json(profile);

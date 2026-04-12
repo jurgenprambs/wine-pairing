@@ -133,9 +133,9 @@ export default function WineForm({
             disabled={
               isLoading || !wineName.trim() || !winery.trim() || !vintage.trim()
             }
-            className="w-full py-3 px-4 rounded-lg border border-gold/40 bg-transparent text-gold text-sm font-[family-name:var(--font-display)] tracking-wide hover:bg-gold/10 hover:border-gold/60 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-gold text-base py-3"
           >
-            Learn about the wine
+            Learn about the wine →
           </button>
           <p className="text-cream/35 text-[11px] mt-2 text-center leading-snug">
             Tasting notes only — no recipe. Handy for servers and the floor.

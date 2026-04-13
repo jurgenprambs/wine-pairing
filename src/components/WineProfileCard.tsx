@@ -75,42 +75,46 @@ function ProfileSection({
   );
 }
 
+const atAGlanceIcon = (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={1.5}
+      d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+    />
+  </svg>
+);
+
 export default function WineProfileCard({
   profile,
   variant = 'default',
 }: WineProfileCardProps) {
+  const highlightsAsBullets =
+    profile.patronHighlights && profile.patronHighlights.length > 0
+      ? profile.patronHighlights.map((h) => `• ${h.trim()}`).join('\n')
+      : '';
+
   return (
     <div className="fade-in-up">
-      <div className="mb-4">
-        <div className="section-label">01 / Wine Profile</div>
-        {variant === 'floorStaff' && (
-          <p className="text-cream/55 text-sm mt-2 max-w-xl leading-relaxed">
-            Start with <strong className="text-cream/70 font-medium">At a glance</strong> for
-            quick guest conversation — then the full profile below. No recipe;
-            perfect for the floor.
-          </p>
-        )}
-      </div>
       <div className="glass-panel p-6 md:p-8">
-        {profile.patronHighlights && profile.patronHighlights.length > 0 && (
-          <div className="mb-6 pb-6 border-b border-border">
-            <div className="text-gold text-xs font-medium uppercase tracking-wider mb-3">
-              At a glance — for your guest
-            </div>
-            <ul className="space-y-2.5">
-              {profile.patronHighlights.map((line, i) => (
-                <li
-                  key={i}
-                  className="flex items-start gap-3 text-sm text-cream leading-relaxed"
-                >
-                  <span className="font-[family-name:var(--font-display)] text-gold font-semibold tabular-nums shrink-0 w-5">
-                    {i + 1}.
-                  </span>
-                  <span>{renderMarkdownInline(stripUrls(line))}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="pb-5 mb-5 border-b border-border">
+          <div className="section-label">03 / Wine Profile</div>
+          {variant === 'floorStaff' && (
+            <p className="text-cream/55 text-sm mt-2 max-w-xl leading-relaxed">
+              Start with <strong className="text-cream/70 font-medium">At a glance</strong>{' '}
+              for quick guest conversation — then the full profile below. No recipe;
+              perfect for the floor.
+            </p>
+          )}
+        </div>
+
+        {highlightsAsBullets && (
+          <ProfileSection
+            icon={atAGlanceIcon}
+            label="At a glance — for your guest"
+            content={highlightsAsBullets}
+          />
         )}
         {profile.isInferred && (
           <div className="mb-5 pb-5 border-b border-border">

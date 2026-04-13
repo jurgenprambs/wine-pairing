@@ -74,7 +74,7 @@ export default function RecipeCard({
 }: RecipeCardProps) {
   return (
     <div className="fade-in-up">
-      <div className="section-label mb-4">02 / Recipe</div>
+      <div className="section-label mb-4">04 / Recipe</div>
       <div className="glass-panel-strong p-6 md:p-8">
         <h2 className="font-[family-name:var(--font-display)] text-3xl md:text-4xl font-semibold text-cream mb-3">
           {recipe.dishName}

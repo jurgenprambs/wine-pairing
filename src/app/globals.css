@@ -102,6 +102,11 @@ body {
   color: var(--cream);
 }
 
+select.wine-input {
+  padding-right: 2.75rem;
+  cursor: pointer;
+}
+
 /* Shimmer animation */
 @keyframes shimmer {
   0% { background-position: -200% 0; }

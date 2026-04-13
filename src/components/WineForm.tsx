@@ -282,7 +282,7 @@ export default function WineForm({
         disabled={isLoading || !canProceed}
         className="btn-gold"
       >
-        {isLoading ? 'Generating…' : 'Generate My Pairing →'}
+        {isLoading ? 'Generating…' : 'Generate my pairing →'}
       </button>
     </form>
   );

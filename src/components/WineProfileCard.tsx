@@ -45,20 +45,37 @@ function ProfileSection({
   icon,
   label,
   content,
+  emphasized = false,
 }: {
   icon: React.ReactNode;
   label: string;
   content: string;
+  /** Extra framing for featured blocks (e.g. At a glance). */
+  emphasized?: boolean;
 }) {
   const bullets = stripUrls(content)
     .split(/\n|(?=•)/)
     .map((s) => s.replace(/^[•\-]\s*/, '').trim())
     .filter((s) => s.length > 0);
 
+  const shell =
+    emphasized &&
+    'rounded-t-xl border-x border-t border-gold/30 bg-gradient-to-b from-gold/12 via-gold/5 to-transparent px-4 pt-5 pb-5 sm:px-5 shadow-[inset_0_1px_0_0_rgba(201,168,76,0.22),0_8px_24px_-8px_rgba(0,0,0,0.35)]';
+
   return (
-    <div className="py-5 border-b border-border last:border-b-0">
+    <div
+      className={`py-5 border-b border-border last:border-b-0 ${shell || ''}`}
+    >
       <div className="flex items-center gap-2.5 mb-3">
-        <span className="text-gold">{icon}</span>
+        <span
+          className={
+            emphasized
+              ? 'text-gold rounded-full bg-gold/15 p-2 ring-1 ring-gold/25 shadow-sm'
+              : 'text-gold'
+          }
+        >
+          {icon}
+        </span>
         <h3 className="text-gold text-xs font-medium uppercase tracking-wider">
           {label}
         </h3>
@@ -66,7 +83,13 @@ function ProfileSection({
       <ul className="space-y-2 pl-7">
         {bullets.map((bullet, i) => (
           <li key={i} className="flex items-start gap-2.5 text-sm text-cream/85 leading-relaxed">
-            <span className="w-1.5 h-1.5 rounded-full bg-gold/50 mt-1.5 shrink-0" />
+            <span
+              className={
+                emphasized
+                  ? 'w-1.5 h-1.5 rounded-full bg-gold/70 mt-1.5 shrink-0 shadow-[0_0_6px_rgba(201,168,76,0.35)]'
+                  : 'w-1.5 h-1.5 rounded-full bg-gold/50 mt-1.5 shrink-0'
+              }
+            />
             <span>{renderMarkdownInline(bullet)}</span>
           </li>
         ))}
@@ -111,6 +134,7 @@ export default function WineProfileCard({
 
         {highlightsAsBullets && (
           <ProfileSection
+            emphasized
             icon={atAGlanceIcon}
             label="At a glance — for your guest"
             content={highlightsAsBullets}

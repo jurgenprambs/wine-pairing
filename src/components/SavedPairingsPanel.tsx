@@ -112,10 +112,13 @@ export default function SavedPairingsPanel({
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="text-cream text-sm font-medium truncate">
-                          {p.wineInput.wineName}{' '}
-                          <span className="text-cream/40 font-normal">
-                            {p.wineInput.vintage}
-                          </span>
+                          {p.wineInput.wineName}
+                          {p.wineInput.vintage ? (
+                            <span className="text-cream/40 font-normal">
+                              {' '}
+                              {p.wineInput.vintage}
+                            </span>
+                          ) : null}
                         </div>
                         <div className="text-cream-dim text-xs mt-0.5 truncate font-[family-name:var(--font-display)] italic">
                           {p.recipe.dishName}

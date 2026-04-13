@@ -149,16 +149,14 @@ export function exportPdf(pairing: Pairing): void {
     y += 6;
   }
 
-  // Winery + vintage
+  // Winery + optional vintage
   doc.setFont('times', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(...muted);
-  doc.text(
-    `${pairing.wineInput.winery}  ·  ${pairing.wineInput.vintage}`,
-    center,
-    y,
-    { align: 'center' }
-  );
+  const vintageLine = pairing.wineInput.vintage?.trim()
+    ? `${pairing.wineInput.winery}  ·  ${pairing.wineInput.vintage.trim()}`
+    : pairing.wineInput.winery;
+  doc.text(vintageLine, center, y, { align: 'center' });
   y += 10;
 
   thinRule();

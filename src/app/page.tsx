@@ -319,6 +319,19 @@ export default function Home() {
           From bottle to table — recipes shaped by your wine.
         </p>
         <div className="w-32 h-px bg-gold mx-auto mt-5" />
+        <p className="max-w-2xl mx-auto mt-6 px-2 text-cream/55 text-sm md:text-[15px] leading-relaxed font-[family-name:var(--font-body)] font-light">
+          Take the bottle in your hand on a little journey. Here you can choose
+          between two adventures:{' '}
+          <span className="text-cream/75">
+            learn the story and tasting notes of your wine
+          </span>{' '}
+          — perfect for the table or the floor — or{' '}
+          <span className="text-cream/75">
+            build a full meal around it
+          </span>
+          , with a recipe tailored to what&apos;s in the glass. Same wine, two
+          ways to explore.
+        </p>
       </header>
 
       {/* Main layout */}

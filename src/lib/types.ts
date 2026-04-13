@@ -1,7 +1,8 @@
 export interface WineInput {
   wineName: string;
   winery: string;
-  vintage: string;
+  /** Year; omit for non-vintage / NV wines */
+  vintage?: string;
 }
 
 export interface UserPreferences {

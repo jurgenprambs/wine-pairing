@@ -8,12 +8,39 @@ export async function POST(request: NextRequest) {
   try {
     const { wineInput } = (await request.json()) as { wineInput: WineInput };
 
-    if (!wineInput?.wineName || !wineInput?.winery || !wineInput?.vintage) {
+    if (!wineInput?.wineName?.trim() || !wineInput?.winery?.trim()) {
       return NextResponse.json(
-        { error: 'Missing required wine input fields' },
+        { error: 'Wine name and winery are required' },
         { status: 400 }
       );
     }
+
+    const vintageRaw = wineInput.vintage?.trim();
+    if (vintageRaw) {
+      if (!/^\d{4}$/.test(vintageRaw)) {
+        return NextResponse.json(
+          {
+            error:
+              'Vintage must be a four-digit year (e.g. 2018), or leave it blank for non-vintage wines.',
+          },
+          { status: 400 }
+        );
+      }
+      const year = parseInt(vintageRaw, 10);
+      const maxYear = new Date().getFullYear() + 1;
+      if (year < 1800 || year > maxYear) {
+        return NextResponse.json(
+          {
+            error: `Vintage must be between 1800 and ${maxYear}.`,
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    const vintagePart = vintageRaw
+      ? `, vintage ${vintageRaw}`
+      : ' (no vintage specified — treat as non-vintage, NV, or a typical release for this wine line as appropriate)';
 
     const response = await client.responses.create({
       model: 'gpt-5.4',
@@ -25,7 +52,7 @@ Please explain this wine as you would to someone really interested in learning a
 Use web search to find accurate, specific information about this wine, its producer, and its region.
 
 Return ONLY a valid JSON object with no markdown, no code fences, no explanation — raw JSON only.`,
-      input: `Generate a concise wine profile for: ${wineInput.wineName} by ${wineInput.winery}, vintage ${wineInput.vintage}.
+      input: `Generate a concise wine profile for: ${wineInput.wineName} by ${wineInput.winery}${vintagePart}.
 
 Return this exact JSON structure:
 {

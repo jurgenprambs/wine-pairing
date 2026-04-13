@@ -62,13 +62,27 @@ export default function WineForm({
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
+  const canProceed = wineName.trim() && winery.trim();
+
+  const buildWineInput = (): WineInput => {
+    const v = vintage.trim();
+    return {
+      wineName: wineName.trim(),
+      winery: winery.trim(),
+      ...(v ? { vintage: v } : {}),
+    };
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wineName.trim() || !winery.trim() || !vintage.trim()) return;
-    onSubmit(
-      { wineName: wineName.trim(), winery: winery.trim(), vintage: vintage.trim() },
-      { mainIngredient, cuisineStyle, cookingMethod, season, effortLevel }
-    );
+    if (!canProceed) return;
+    onSubmit(buildWineInput(), {
+      mainIngredient,
+      cuisineStyle,
+      cookingMethod,
+      season,
+      effortLevel,
+    });
   };
 
   return (
@@ -105,17 +119,16 @@ export default function WineForm({
           </div>
           <div>
             <label className="block text-cream/70 text-xs mb-1.5 font-medium">
-              Vintage
+              Vintage <span className="text-cream/35 font-normal">(optional)</span>
             </label>
             <input
               type="number"
               value={vintage}
               onChange={(e) => setVintage(e.target.value)}
-              placeholder="e.g. 2018"
-              min={1900}
-              max={2030}
+              placeholder="e.g. 2018 — leave blank for NV"
+              min={1800}
+              max={new Date().getFullYear() + 1}
               className="wine-input"
-              required
             />
           </div>
         </div>
@@ -123,16 +136,8 @@ export default function WineForm({
         <div className="mt-5 pt-5 border-t border-border">
           <button
             type="button"
-            onClick={() =>
-              onLearnAboutWine({
-                wineName: wineName.trim(),
-                winery: winery.trim(),
-                vintage: vintage.trim(),
-              })
-            }
-            disabled={
-              isLoading || !wineName.trim() || !winery.trim() || !vintage.trim()
-            }
+            onClick={() => onLearnAboutWine(buildWineInput())}
+            disabled={isLoading || !canProceed}
             className="btn-gold text-base py-3"
           >
             Learn about the wine →
@@ -274,9 +279,7 @@ export default function WineForm({
 
       <button
         type="submit"
-        disabled={
-          isLoading || !wineName.trim() || !winery.trim() || !vintage.trim()
-        }
+        disabled={isLoading || !canProceed}
         className="btn-gold"
       >
         {isLoading ? 'Generating…' : 'Generate My Pairing →'}
